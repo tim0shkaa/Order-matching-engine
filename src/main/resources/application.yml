@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: matching-engine
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+# Phase 4: сюда добавится секция wal (путь к журналу, интервал снапшотов и т.п.)
