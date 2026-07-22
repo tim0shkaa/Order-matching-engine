@@ -47,6 +47,9 @@ public class OrderBook {
         if (deleteOrder == null) {
             throw new NoSuchElementException("orderId points to null");
         }
+        if (deleteOrder.side() != side) {
+            throw new IllegalArgumentException("Order side doesn't match argument side");
+        }
         ordersById.remove(orderId);
         if (side == Side.BUY) {
             Deque<Order> deque = bids.get(deleteOrder.price());
