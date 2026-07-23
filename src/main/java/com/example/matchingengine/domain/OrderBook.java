@@ -42,6 +42,26 @@ public class OrderBook {
 
     }
 
+    public Order pollFirstOrder(BigDecimal price, Side side) {
+        Deque<Order> deque = side == Side.BUY ? bids.get(price) : asks.get(price);
+        if (deque == null) {
+            throw new NoSuchElementException("Заявки с ценой: " + price + " не существует");
+        }
+
+        Order deleteOrder = deque.pollFirst();
+        ordersById.remove(deleteOrder.id());
+
+        if (deque.isEmpty()) {
+            if (side == Side.BUY) {
+                bids.remove(price);
+            } else {
+                asks.remove(price);
+            }
+        }
+
+        return deleteOrder;
+    }
+
     public Order removeOrder(UUID orderId, Side side) {
         Order deleteOrder = ordersById.get(orderId);
         if (deleteOrder == null) {
