@@ -210,4 +210,63 @@ class OrderBookTest {
         assertThrows(NoSuchElementException.class,
                 () -> orderBook.reduceOrderQuantity(Side.BUY, noSuchPrice, new BigDecimal("1")));
     }
+
+    @Test
+    @DisplayName("pollFirstOrder удаляет и возвращает первую заявку в очереди")
+    void pollFirstOrder_returnsAndRemovesFirstOrder() {
+        UUID orderId1 = UUID.randomUUID();
+        UUID orderId2 = UUID.randomUUID();
+
+        orderBook.addOrder(createOrder(orderId1, Side.BUY));
+        orderBook.addOrder(createOrder(orderId2, Side.BUY));
+
+        Order polled = orderBook.pollFirstOrder(DEFAULT_PRICE, Side.BUY);
+
+        assertEquals(orderId1, polled.id());
+        assertEquals(orderId2, orderBook.peekBestBidOrder().get().id());
+    }
+
+    @Test
+    @DisplayName("pollFirstOrder последней заявки на уровне убирает сам уровень цены")
+    void pollFirstOrder_lastOnLevel_removesPriceLevelEntirely() {
+        orderBook.addOrder(createOrder(UUID.randomUUID(), Side.BUY));
+
+        orderBook.pollFirstOrder(DEFAULT_PRICE, Side.BUY);
+
+        assertTrue(orderBook.bestBid().isEmpty());
+        assertTrue(orderBook.peekBestBidOrder().isEmpty());
+    }
+
+    @Test
+    @DisplayName("pollFirstOrder синхронизирует индекс ordersById")
+    void pollFirstOrder_removesFromOrdersByIdIndex() {
+        UUID orderId = UUID.randomUUID();
+        orderBook.addOrder(createOrder(orderId, Side.BUY));
+
+        orderBook.pollFirstOrder(DEFAULT_PRICE, Side.BUY);
+
+        assertThrows(NoSuchElementException.class,
+                () -> orderBook.removeOrder(orderId, Side.BUY));
+    }
+
+    @Test
+    @DisplayName("pollFirstOrder с несуществующей ценой кидает NoSuchElementException")
+    void pollFirstOrder_unknownPrice_throwsNoSuchElementException() {
+        BigDecimal noSuchPrice = new BigDecimal("1");
+
+        assertThrows(NoSuchElementException.class,
+                () -> orderBook.pollFirstOrder(noSuchPrice, Side.BUY));
+    }
+
+    @ParameterizedTest
+    @EnumSource(Side.class)
+    @DisplayName("pollFirstOrder работает симметрично для BUY и SELL")
+    void pollFirstOrder_worksForBothSides(Side side) {
+        UUID orderId = UUID.randomUUID();
+        orderBook.addOrder(createOrder(orderId, side));
+
+        Order polled = orderBook.pollFirstOrder(DEFAULT_PRICE, side);
+
+        assertEquals(orderId, polled.id());
+    }
 }

@@ -10,9 +10,11 @@ import java.util.UUID;
 
 public class MatchingEngine {
 
-    private static final String INSTRUMENT_ID = "BTC-USD";
+    private final OrderBook orderBook;
 
-    private final OrderBook orderBook = new OrderBook(INSTRUMENT_ID);
+    public MatchingEngine(OrderBook orderBook) {
+        this.orderBook = orderBook;
+    }
 
     public MatchingResult submitOrder(Order order) {
         List<Trade> trades = new ArrayList<>();
@@ -33,7 +35,7 @@ public class MatchingEngine {
 
             Trade trade = new Trade(
                     UUID.randomUUID(),
-                    INSTRUMENT_ID,
+                    order.instrumentId(),
                     order.side() == Side.BUY ? order.id() : resting.id(),
                     order.side() == Side.BUY ? resting.id() : order.id(),
                     resting.price(),
