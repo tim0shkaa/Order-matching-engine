@@ -135,4 +135,10 @@ public class OrderBook {
         currentDeque.addFirst(newOrder);
         ordersById.put(newOrder.id(), newOrder);
     }
+
+    void clear() {
+        bids.clear();
+        asks.clear();
+        ordersById.clear();
+    }
 }
