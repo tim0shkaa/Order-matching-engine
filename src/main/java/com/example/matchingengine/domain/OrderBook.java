@@ -127,6 +127,7 @@ public class OrderBook {
                 oldOrder.id(),
                 oldOrder.instrumentId(),
                 oldOrder.side(),
+                oldOrder.orderType(),
                 oldOrder.price(),
                 oldOrder.quantity(),
                 oldOrder.remainingQuantity().subtract(fillingQuantity),
@@ -136,9 +137,28 @@ public class OrderBook {
         ordersById.put(newOrder.id(), newOrder);
     }
 
-    void clear() {
-        bids.clear();
-        asks.clear();
-        ordersById.clear();
+    public boolean haveEnoughQuantity(Order order) {
+        var levels = order.side() == Side.BUY
+                ? asks.headMap(order.price(), true)
+                : bids.headMap(order.price(), true);
+
+        BigDecimal accumulated = BigDecimal.ZERO;
+
+        for (Deque<Order> deque : levels.values()) {
+            accumulated = accumulated.add(quantityInDeque(deque));
+            if (accumulated.compareTo(order.quantity()) >= 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private BigDecimal quantityInDeque(Deque<Order> deque) {
+        BigDecimal summaryQuantity = BigDecimal.ZERO;
+        for (Order order : deque) {
+            summaryQuantity = summaryQuantity.add(order.quantity());
+        }
+        return summaryQuantity;
     }
 }

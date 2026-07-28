@@ -7,6 +7,7 @@ public record Order(
         UUID id,
         String instrumentId,
         Side side,
+        OrderType orderType,
         BigDecimal price,
         BigDecimal quantity,
         BigDecimal remainingQuantity,

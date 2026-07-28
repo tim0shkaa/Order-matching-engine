@@ -32,6 +32,7 @@ public class OrderMapper {
                 UUID.randomUUID(),
                 "BTC-USD",
                 request.side(),
+                request.orderType(),
                 request.price(),
                 request.quantity(),
                 request.quantity(),
