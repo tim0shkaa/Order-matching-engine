@@ -35,6 +35,7 @@ class OrderBookTest {
                 id,
                 INSTRUMENT_ID,
                 side,
+                OrderType.LIMIT,
                 price,
                 DEFAULT_QUANTITY,
                 DEFAULT_QUANTITY,

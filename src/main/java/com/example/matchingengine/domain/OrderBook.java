@@ -127,6 +127,7 @@ public class OrderBook {
                 oldOrder.id(),
                 oldOrder.instrumentId(),
                 oldOrder.side(),
+                oldOrder.orderType(),
                 oldOrder.price(),
                 oldOrder.quantity(),
                 oldOrder.remainingQuantity().subtract(fillingQuantity),
@@ -136,9 +137,38 @@ public class OrderBook {
         ordersById.put(newOrder.id(), newOrder);
     }
 
-    void clear() {
-        bids.clear();
-        asks.clear();
-        ordersById.clear();
+    public boolean haveEnoughQuantity(Order order) {
+        var levels = order.side() == Side.BUY
+                ? asks.headMap(order.price(), true)
+                : bids.headMap(order.price(), true);
+
+        BigDecimal accumulated = BigDecimal.ZERO;
+
+        for (Deque<Order> deque : levels.values()) {
+            accumulated = accumulated.add(quantityInDeque(deque));
+            if (accumulated.compareTo(order.quantity()) >= 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public List<PriceLevel> getPriceLevel(Side side) {
+        TreeMap<BigDecimal, Deque<Order>> collection = side == Side.BUY ? bids : asks;
+        List<PriceLevel> priceLevels = new ArrayList<>();
+        for (Map.Entry<BigDecimal, Deque<Order>> entry : collection.entrySet()) {
+            BigDecimal totalQuantity = quantityInDeque(entry.getValue());
+            priceLevels.add(new PriceLevel(entry.getKey(), totalQuantity));
+        }
+        return priceLevels;
+    }
+
+    private BigDecimal quantityInDeque(Deque<Order> deque) {
+        BigDecimal summaryQuantity = BigDecimal.ZERO;
+        for (Order order : deque) {
+            summaryQuantity = summaryQuantity.add(order.quantity());
+        }
+        return summaryQuantity;
     }
 }
