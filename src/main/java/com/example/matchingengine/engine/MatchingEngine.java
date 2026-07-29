@@ -1,6 +1,8 @@
 package com.example.matchingengine.engine;
 
 import com.example.matchingengine.domain.*;
+import com.example.matchingengine.marketdata.OrderBookChangedEvent;
+import com.example.matchingengine.marketdata.TradeExecutedEvent;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -12,9 +14,11 @@ import java.util.UUID;
 public class MatchingEngine {
 
     private final OrderBook orderBook;
+    private final EventPublisher eventPublisher;
 
-    public MatchingEngine(OrderBook orderBook) {
+    public MatchingEngine(OrderBook orderBook, EventPublisher eventPublisher) {
         this.orderBook = orderBook;
+        this.eventPublisher = eventPublisher;
     }
 
     public MatchingResult submitOrder(Order order) {
@@ -39,6 +43,12 @@ public class MatchingEngine {
             order = new Order(order.id(), order.instrumentId(), order.side(), order.orderType(),
                     order.price(), order.quantity(), BigDecimal.ZERO, order.orderStatus());
         }
+
+        if (!trades.isEmpty()) {
+            eventPublisher.publish(new TradeExecutedEvent(trades));
+        }
+
+        eventPublisher.publish(new OrderBookChangedEvent("BTC-USD"));
 
         return new MatchingResult(trades, order);
     }

@@ -1,6 +1,8 @@
 package com.example.matchingengine.engine;
 
 import com.example.matchingengine.domain.*;
+import com.example.matchingengine.marketdata.OrderBookChangedEvent;
+import com.example.matchingengine.marketdata.TradeExecutedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,6 +10,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,7 +26,8 @@ class MatchingEngineTest {
     @BeforeEach
     void setUp() {
         orderBook = new OrderBook(INSTRUMENT_ID);
-        matchingEngine = new MatchingEngine(orderBook);
+        EventPublisher noOpEventPublisher = event -> {};
+        matchingEngine = new MatchingEngine(orderBook, noOpEventPublisher);
     }
 
     private Order createOrder(UUID id, Side side, BigDecimal price, BigDecimal quantity, OrderType orderType) {
@@ -318,5 +323,22 @@ class MatchingEngineTest {
 
         assertEquals(2, result.trades().size());
         assertEquals(OrderStatus.FILLED, result.resultingOrder().orderStatus());
+    }
+
+    // --- Event ---
+
+    @Test
+    @DisplayName("после сделки публикуется TradeExecutedEvent с правильным списком сделок")
+    void submitOrder_afterTrade_publishesTradeExecutedEvent() {
+        List<Object> publishedEvents = new ArrayList<>();
+        MatchingEngine engineWithRecording = new MatchingEngine(orderBook, publishedEvents::add);
+
+        orderBook.addOrder(createOrder(UUID.randomUUID(), Side.SELL, BigDecimal.valueOf(50000), BigDecimal.valueOf(5)));
+        Order buy = createOrder(UUID.randomUUID(), Side.BUY, BigDecimal.valueOf(50000), BigDecimal.valueOf(5));
+
+        engineWithRecording.submitOrder(buy);
+
+        assertTrue(publishedEvents.stream().anyMatch(e -> e instanceof TradeExecutedEvent));
+        assertTrue(publishedEvents.stream().anyMatch(e -> e instanceof OrderBookChangedEvent));
     }
 }

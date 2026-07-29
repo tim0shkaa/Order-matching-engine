@@ -154,6 +154,16 @@ public class OrderBook {
         return false;
     }
 
+    public List<PriceLevel> getPriceLevel(Side side) {
+        TreeMap<BigDecimal, Deque<Order>> collection = side == Side.BUY ? bids : asks;
+        List<PriceLevel> priceLevels = new ArrayList<>();
+        for (Map.Entry<BigDecimal, Deque<Order>> entry : collection.entrySet()) {
+            BigDecimal totalQuantity = quantityInDeque(entry.getValue());
+            priceLevels.add(new PriceLevel(entry.getKey(), totalQuantity));
+        }
+        return priceLevels;
+    }
+
     private BigDecimal quantityInDeque(Deque<Order> deque) {
         BigDecimal summaryQuantity = BigDecimal.ZERO;
         for (Order order : deque) {

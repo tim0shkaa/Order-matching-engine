@@ -1,6 +1,7 @@
 package com.example.matchingengine.gateway;
 
 import com.example.matchingengine.domain.OrderBook;
+import com.example.matchingengine.engine.EventPublisher;
 import com.example.matchingengine.engine.MatchingEngine;
 import com.example.matchingengine.gateway.mapper.OrderMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +23,8 @@ class OrderControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         OrderBook orderBook = new OrderBook("BTC-USD");
-        MatchingEngine matchingEngine = new MatchingEngine(orderBook);
+        EventPublisher noOpEventPublisher = event -> {};
+        MatchingEngine matchingEngine = new MatchingEngine(orderBook, noOpEventPublisher);
         OrderController controller = new OrderController(new OrderMapper(), matchingEngine);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
